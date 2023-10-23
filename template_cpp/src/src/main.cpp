@@ -4,8 +4,11 @@
 
 #include "parser.hpp"
 #include "hello.h"
+#include "udp.hpp"
 #include <signal.h>
 
+std::ofstream outputFile;
+UDPSocket udpSocket;
 
 static void stop(int) {
   // reset signal handlers to default
@@ -29,6 +32,7 @@ int main(int argc, char **argv) {
   // `true` means that a config file is required.
   // Call with `false` if no config file is necessary.
   bool requireConfig = true;
+  unsigned long m,i;
 
   Parser parser(argc, argv);
   parser.parse();
@@ -36,6 +40,7 @@ int main(int argc, char **argv) {
   hello();
   std::cout << std::endl;
 
+// PID = Process ID ?
   std::cout << "My PID: " << getpid() << "\n";
   std::cout << "From a new terminal type `kill -SIGINT " << getpid() << "` or `kill -SIGTERM "
             << getpid() << "` to stop processing packets\n\n";
@@ -66,6 +71,22 @@ int main(int argc, char **argv) {
   std::cout << "Doing some initialization...\n\n";
 
   std::cout << "Broadcasting and delivering messages...\n\n";
+
+  std::ifstream config_file(parser.configPath());
+  config_file >> m >> i;
+  config_file.close();
+
+  // create a socket for that given process!
+  udpSocket = UDPSocket(hosts[parser.id()-1]);
+  // start the socket -> we create two threads, one for sending and one for receiving
+  udpSocket.create();
+
+  // if this is not the receiving process, then it can broadcast the messages!
+  if (parser.id() != i) {
+    for (unsigned int message=1;message<=m;message ++) {
+      udpSocket.enque(hosts[i-1], message);      
+    }
+  }
 
   // After a process finishes broadcasting,
   // it waits forever for the delivery of messages.
