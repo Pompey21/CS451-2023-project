@@ -22,7 +22,6 @@ static void stop(int) {
   std::cout << "Writing output.\n";
 
   for(auto const &output: udpSocket.get_logs()){
-    std::cout << output << std::endl;
     outputFile << output << std::endl;
   }
   outputFile.close();
@@ -32,8 +31,6 @@ static void stop(int) {
 }
 
 int main(int argc, char **argv) {
-  std::cout << "version 1" << "\n";
-
   signal(SIGTERM, stop);
   signal(SIGINT, stop);
 
@@ -75,7 +72,9 @@ int main(int argc, char **argv) {
   std::cout << parser.outputPath() << "\n\n";
   outputFile.open(parser.outputPath(), std::ofstream::out);
   if (!outputFile.is_open()){
-    std::cout << "not open";
+    std::cout << "Cannot open the file..." << "\n";
+    std::cout << "Exiting..." << "\n";
+    exit(0);
   }
 
   std::cout << "Path to config:\n";
